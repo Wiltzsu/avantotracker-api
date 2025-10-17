@@ -14,21 +14,14 @@ class AvantoController extends Controller
     /**
      * Get all items
      */
-    public function index()
+    public function index(Request $request)
     {
-        $avantos = Avanto::where('user_id', Auth::id())
-            ->orderBy('date', 'desc')
+        $avantos = $request->user()
+            ->avantos()
+            ->latest('date')
             ->paginate(10);
 
-        return AvantoResource::collection($avantos)
-            ->additional([
-                'meta' => [
-                    'current_page' => $avantos->currentPage(),
-                    'last_page' => $avantos->lastPage(),
-                    'total' => $avantos->total(),
-                ],
-            ])
-            ->response();
+        return AvantoResource::collection($avantos);
     }
 
     /**
