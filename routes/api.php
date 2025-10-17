@@ -13,13 +13,25 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Protected routes
+/**
+ * Protected API routes (auth:sanctum).
+ * All nested `v1/*` endpoints require a valid Sanctum token; unauthenticated requests get 401.
+ * Registers RESTful `avanto` routes (index, store, show, update, destroy).
+ */
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
+    /**
+     * Register all five REST routes:
+     *
+     * GET /api/v1/avanto -> list all
+     * POST /api/v1/avanto -> store
+     * GET /api/v1/avanto/{avanto} -> show
+     * PUT /api/v1/avanto/{avanto} -> update
+     * DELETE /api/v1/avanto/{avanto} -> destroy
+     */
     Route::prefix('v1')->group(function () {
         Route::apiResource('avanto', AvantoController::class);
-        Route::get('avanto/user/{user_id}', [AvantoController::class, 'getUserAvantos']);
     });
 });

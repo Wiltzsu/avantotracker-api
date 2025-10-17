@@ -4,30 +4,37 @@ namespace App\Http\Controllers;
 
 use App\Models\Avanto;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\AvantoResource;
 
 class AvantoController extends Controller
 {
-    public function index(): JsonResponse
+    /**
+     * Get all items
+     */
+    public function index()
     {
         $avantos = Avanto::where('user_id', Auth::id())
             ->orderBy('date', 'desc')
             ->paginate(10);
 
-        return response()->json([
-            'data' => $avantos,
-            'meta' => [
-                'current_page' => $avantos->currentPage(),
-                'last_page' => $avantos->lastPage(),
-                'total' => $avantos->total(),
-            ]
-        ]);
+        return AvantoResource::collection($avantos)
+            ->additional([
+                'meta' => [
+                    'current_page' => $avantos->currentPage(),
+                    'last_page' => $avantos->lastPage(),
+                    'total' => $avantos->total(),
+                ],
+            ])
+            ->response();
     }
 
-    public function store(Request $request): JsonResponse
+    /**
+     * Create new item
+     */
+    public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'date' => 'required|date',
@@ -62,83 +69,27 @@ class AvantoController extends Controller
         ], 201);
     }
 
-    public function show(Avanto $avanto): JsonResponse
+    /**
+     * Get single item
+     */
+    public function show(Avanto $avanto)
     {
-        if ($avanto->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        return response()->json(['data' => $avanto]);
+        //
     }
 
-    public function update(Request $request, Avanto $avanto): JsonResponse
+    /**
+     * Update item
+     */
+    public function update(Request $request, Avanto $avanto)
     {
-        if ($avanto->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'date' => 'sometimes|date',
-            'location' => 'nullable|string|max:255',
-            'water_temperature' => 'nullable|numeric|min:0|max:50',
-            'duration_minutes' => 'nullable|integer|min:0|max:300',
-            'duration_seconds' => 'nullable|integer|min:0|max:59',
-            'swear_words' => 'nullable|integer|min:0',
-            'feeling_before' => 'nullable|integer|min:1|max:10',
-            'feeling_after' => 'nullable|integer|min:1|max:10',
-            'selfie' => 'nullable|image|max:2048',
-            'sauna' => 'nullable|boolean',
-            'sauna_duration' => 'nullable|integer|min:1|max:120',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $data = $request->except('selfie');
-
-        if ($request->hasFile('selfie')) {
-            // Delete old selfie if exists
-            if ($avanto->selfie_path) {
-                Storage::disk('public')->delete($avanto->selfie_path);
-            }
-            $data['selfie_path'] = $request->file('selfie')->store('selfies', 'public');
-        }
-
-        $avanto->update($data);
-
-        return response()->json([
-            'message' => 'Avanto session updated successfully',
-            'data' => $avanto
-        ]);
+        //
     }
 
-    public function destroy(Avanto $avanto): JsonResponse
+    /**
+     * Delete item
+     */
+    public function destroy(Avanto $avanto)
     {
-        if ($avanto->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        // Delete selfie file if exists
-        if ($avanto->selfie_path) {
-            Storage::disk('public')->delete($avanto->selfie_path);
-        }
-
-        $avanto->delete();
-
-        return response()->json(['message' => 'Avanto session deleted successfully']);
-    }
-
-    public function getUserAvantos($userId): JsonResponse
-    {
-        if ($userId != Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $avantos = Avanto::where('user_id', $userId)
-            ->orderBy('date', 'desc')
-            ->get();
-
-        return response()->json(['data' => $avantos]);
+        //
     }
 }
