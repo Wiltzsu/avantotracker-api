@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Avanto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\AvantoResource;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class AvantoController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Get all items
      */
@@ -67,7 +69,9 @@ class AvantoController extends Controller
      */
     public function show(Avanto $avanto)
     {
-        //
+        // Prevent users from accessing other users' ice bath data
+        $this->authorize('view', $avanto);
+        return new AvantoResource($avanto);
     }
 
     /**
