@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Avanto;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\AvantoResource;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 
 class AvantoController extends Controller
 {
@@ -15,8 +16,11 @@ class AvantoController extends Controller
 
     /**
      * Get all items
+     *
+     * @param Request $request
+     * @return AnonymousResourceCollection
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $avantos = $request->user()
             ->avantos()
@@ -28,10 +32,13 @@ class AvantoController extends Controller
 
     /**
      * Create new item
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->validate([
             'date' => 'required|date',
             'location' => 'nullable|string|max:255',
             'water_temperature' => 'nullable|numeric|min:0|max:50',
@@ -40,21 +47,11 @@ class AvantoController extends Controller
             'swear_words' => 'nullable|integer|min:0',
             'feeling_before' => 'nullable|integer|min:1|max:10',
             'feeling_after' => 'nullable|integer|min:1|max:10',
-            'selfie' => 'nullable|image|max:2048',
             'sauna' => 'nullable|boolean',
             'sauna_duration' => 'nullable|integer|min:1|max:120',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $data = $request->except('selfie');
-        $data['user_id'] = Auth::id();
-
-        if ($request->hasFile('selfie')) {
-            $data['selfie_path'] = $request->file('selfie')->store('selfies', 'public');
-        }
+        $data['user_id'] = $request->user()->id;
 
         $avanto = Avanto::create($data);
 
@@ -66,13 +63,21 @@ class AvantoController extends Controller
 
     /**
      * Get single item
+     *
+     * @param Avanto $avanto
+     * @return \App\Http\Resources\AvantoResource
      */
-    public function show(Avanto $avanto)
+    public function show(Avanto $avanto): AvantoResource
     {
         // Prevent users from accessing other users' ice bath data
         $this->authorize('view', $avanto);
+
         return new AvantoResource($avanto);
     }
+
+    /**
+     * Show template for editing item
+     */
 
     /**
      * Update item

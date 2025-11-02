@@ -42,11 +42,6 @@ class Avanto extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getSelfieUrlAttribute(): ?string
-    {
-        return $this->selfie_path ? Storage::url($this->selfie_path) : null;
-    }
-
     public function getTotalDurationAttribute(): int
     {
         return ($this->duration_minutes * 60) + ($this->duration_seconds ?? 0);
