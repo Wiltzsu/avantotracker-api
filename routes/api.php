@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\AvantoController;
+use App\Http\Controllers\StatsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -33,5 +34,8 @@ Route::middleware('auth:sanctum')->group(function () {
      */
     Route::prefix('v1')->group(function () {
         Route::apiResource('avanto', AvantoController::class);
+        // User stats page
+        Route::get('/stats', [StatsController::class, 'stats']);
     });
+
 });

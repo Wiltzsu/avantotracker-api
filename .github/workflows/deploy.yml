@@ -1,0 +1,52 @@
+name: Deploy to production
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        extensions: bcmath, ctype, dom, fileinfo, json, mbstring, mysqli, openssl, pdo_mysql, tokenizer, xml
+        coverage: none
+
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader
+
+    - name: Deploy to server
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+
+        # Copy Laravel application files
+        scp -o StrictHostKeyChecking=no -r app/ ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/avantotracker-api/
+        scp -o StrictHostKeyChecking=no -r config/ ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/avantotracker-api/
+        scp -o StrictHostKeyChecking=no -r routes/ ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/avantotracker-api/
+        scp -o StrictHostKeyChecking=no -r database/ ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/avantotracker-api/
+        scp -o StrictHostKeyChecking=no -r resources/ ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/avantotracker-api/
+        scp -o StrictHostKeyChecking=no -r bootstrap/ ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/avantotracker-api/
+        scp -o StrictHostKeyChecking=no -r public/ ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/avantotracker-api/
+        scp -o StrictHostKeyChecking=no artisan ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/avantotracker-api/
+        scp -o StrictHostKeyChecking=no composer.json ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/avantotracker-api/
+        scp -o StrictHostKeyChecking=no composer.lock ${{ secrets.USER }}@${{ secrets.HOST }}:/var/www/avantotracker-api/
+
+    - name: Run server commands
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.HOST }} << 'EOF'
+          cd /var/www/avantotracker-api/
+          composer install --no-dev --optimize-autoloader
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          php artisan migrate --force
+        EOF
