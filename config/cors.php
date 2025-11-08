@@ -15,14 +15,15 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'register', 'logout'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
         'https://www.avantotracker.com',
-        'http://localhost:3000',  // For local development
-        'http://127.0.0.1:3000',  // For local development
+        'https://avantotracker.com',
+        'http://localhost:3000',
+        'http://localhost:3001',
     ],
 
     'allowed_origins_patterns' => [],
@@ -31,7 +32,7 @@ return [
 
     'exposed_headers' => [],
 
-    'max_age' => 0,
+    'max_age' => 3600,
 
     'supports_credentials' => true,
 
