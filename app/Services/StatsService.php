@@ -2,33 +2,33 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
+use App\Models\Avanto;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class StatsService
 {
     public function getUserStats(User $user, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
-        $query = $user->avantos();
+        $query = Avanto::query()->where('user_id', $user->id);
 
         if ($startDate) {
             $query->where('date', '>=', $startDate);
         }
 
         if ($endDate) {
-            $query->where('date', '>=', $endDate);
+            $query->where('date', '<=', $endDate);
         }
 
         return [
-            'total_visits' => $query->count(),
+            'total_visits' => (clone $query)->count(),
             'total_duration' => $this->getTotalDuration($query),
         ];
     }
 
-    private function getTotalDuration($query): int
+    private function getTotalDuration(Builder $query): int
     {
-        return $query->get()->sum(function ($avanto) {
-            return ($avanto->duration_minutes * 60) + ($avanto->duration_seconds ?? 0);
-        });
+        return $query->get()->sum(fn ($avanto) => $avanto->total_duration);
     }
 }
