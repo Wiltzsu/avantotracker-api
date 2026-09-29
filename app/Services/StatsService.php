@@ -254,27 +254,74 @@ class StatsService
 
     private function buildAchievements(User $user, int $totalVisits, int $totalDuration, array $streaks): array
     {
-        $longestEver = $this->longestDuration($this->baseQuery($user));
-        $allTimeVisits = $this->baseQuery($user)->count();
+        $metrics = $this->achievementMetrics($user, $streaks);
 
         return [
+            [
+                'id' => 'first_dip',
+                'title' => 'Ensimmäinen askel',
+                'description' => 'Ensimmäinen avanto kirjattu',
+                'unlocked' => $metrics['all_time_visits'] >= 1,
+            ],
+            [
+                'id' => 'regular',
+                'title' => 'Vakiokävijä',
+                'description' => '10 avantokertaa',
+                'unlocked' => $metrics['all_time_visits'] >= 10,
+            ],
+            [
+                'id' => 'winter_starter',
+                'title' => 'Talven aloitaja',
+                'description' => 'Avanto marraskuun ja maaliskuun välillä',
+                'unlocked' => $metrics['winter_month_dips'] >= 1,
+            ],
             [
                 'id' => 'ice_king',
                 'title' => 'Jääkuningas',
                 'description' => '50 avantokertaa',
-                'unlocked' => $allTimeVisits >= 50,
-            ],
-            [
-                'id' => 'endurance',
-                'title' => 'Kestävyysjuoksija',
-                'description' => 'Yli 5 minuutin uinti',
-                'unlocked' => $longestEver >= 300,
+                'unlocked' => $metrics['all_time_visits'] >= 50,
             ],
             [
                 'id' => 'arctic_hero',
                 'title' => 'Arktinen sankari',
                 'description' => '100 avantokertaa',
-                'unlocked' => $allTimeVisits >= 100,
+                'unlocked' => $metrics['all_time_visits'] >= 100,
+            ],
+            [
+                'id' => 'sub_zero',
+                'title' => 'Nollan alapuolella',
+                'description' => 'Uinti nollan tai alle',
+                'unlocked' => $metrics['has_sub_zero_dip'],
+            ],
+            [
+                'id' => 'ice_block',
+                'title' => 'Jääpalas',
+                'description' => 'Kylmin uinti -1 °C tai alle',
+                'unlocked' => $metrics['coldest_ever'] !== null && $metrics['coldest_ever'] <= -1,
+            ],
+            [
+                'id' => 'minute_man',
+                'title' => 'Minuutin mies',
+                'description' => 'Vähintään minuutin uinti',
+                'unlocked' => $metrics['longest_ever'] >= 60,
+            ],
+            [
+                'id' => 'three_minute',
+                'title' => 'Kolmen minuutin seikkailu',
+                'description' => 'Vähintään 3 minuutin uinti',
+                'unlocked' => $metrics['longest_ever'] >= 180,
+            ],
+            [
+                'id' => 'endurance',
+                'title' => 'Kestävyysjuoksija',
+                'description' => 'Yli 5 minuutin uinti',
+                'unlocked' => $metrics['longest_ever'] >= 300,
+            ],
+            [
+                'id' => 'marathon',
+                'title' => 'Maratonuinti',
+                'description' => 'Yli 10 minuutin uinti',
+                'unlocked' => $metrics['longest_ever'] >= 600,
             ],
             [
                 'id' => 'week_warrior',
@@ -283,17 +330,216 @@ class StatsService
                 'unlocked' => $streaks['best'] >= 7,
             ],
             [
+                'id' => 'month_streak',
+                'title' => 'Kuukauden putki',
+                'description' => '30 päivän putki',
+                'unlocked' => $streaks['best'] >= 30,
+            ],
+            [
+                'id' => 'comeback',
+                'title' => 'Paluu kylmään',
+                'description' => 'Uinti 30+ päivän tauon jälkeen',
+                'unlocked' => $metrics['has_comeback'],
+            ],
+            [
+                'id' => 'weekly_habit',
+                'title' => 'Viikkorytmi',
+                'description' => '3 avantoa samalla viikolla',
+                'unlocked' => $metrics['has_weekly_habit'],
+            ],
+            [
+                'id' => 'mood_boost',
+                'title' => 'Fiilipiikki',
+                'description' => 'Fiilis nousee vähintään 5 pykälää',
+                'unlocked' => $metrics['has_mood_boost'],
+            ],
+            [
+                'id' => 'zen',
+                'title' => 'Zen-uinti',
+                'description' => 'Fiilis jälkeen vähintään 9',
+                'unlocked' => $metrics['has_zen_dip'],
+            ],
+            [
+                'id' => 'swear_storm',
+                'title' => 'Sanat lentää',
+                'description' => '5+ kirosanaa yhdessä uintissa',
+                'unlocked' => $metrics['max_swear_words'] >= 5,
+            ],
+            [
+                'id' => 'silent_seal',
+                'title' => 'Hiljainen hylje',
+                'description' => '10 uintia ilman kirosanoja',
+                'unlocked' => $metrics['silent_dip_count'] >= 10,
+            ],
+            [
+                'id' => 'hot_cold',
+                'title' => 'Löyly ja jää',
+                'description' => '10 avantoa saunan kanssa',
+                'unlocked' => $metrics['sauna_count'] >= 10,
+            ],
+            [
                 'id' => 'sauna_regular',
                 'title' => 'Saunamies',
                 'description' => '20 saunakertaa',
-                'unlocked' => (int) $this->baseQuery($user)->where('sauna', true)->count() >= 20,
+                'unlocked' => $metrics['sauna_count'] >= 20,
+            ],
+            [
+                'id' => 'long_sauna',
+                'title' => 'Pitkä löyly',
+                'description' => 'Sauna vähintään 20 minuuttia',
+                'unlocked' => $metrics['longest_sauna'] >= 20,
+            ],
+            [
+                'id' => 'explorer',
+                'title' => 'Paikkarakastaja',
+                'description' => '3 eri sijaintia',
+                'unlocked' => $metrics['distinct_locations'] >= 3,
+            ],
+            [
+                'id' => 'home_ground',
+                'title' => 'Kotiranta',
+                'description' => '15 uintia samassa paikassa',
+                'unlocked' => $metrics['max_location_visits'] >= 15,
+            ],
+            [
+                'id' => 'year_round',
+                'title' => 'Ympäri vuoden',
+                'description' => 'Avantoja 4 eri kuukaudessa',
+                'unlocked' => $metrics['distinct_months'] >= 4,
+            ],
+            [
+                'id' => 'new_year',
+                'title' => 'Uudenvuodenuinti',
+                'description' => 'Avanto uudenvuodenpäivänä',
+                'unlocked' => $metrics['has_new_year_dip'],
+            ],
+            [
+                'id' => 'selfie_star',
+                'title' => 'Muistokuva',
+                'description' => 'Selfie liitetty avantoon',
+                'unlocked' => $metrics['has_selfie'],
+            ],
+            [
+                'id' => 'early_bird',
+                'title' => 'Aamuhyppääjä',
+                'description' => 'Avanto kirjattu ennen klo 10',
+                'unlocked' => $metrics['has_early_bird'],
+            ],
+            [
+                'id' => 'winter_total',
+                'title' => 'Talvirii',
+                'description' => '10 avantoa talvikuukausina',
+                'unlocked' => $metrics['winter_month_dips'] >= 10,
             ],
             [
                 'id' => 'cold_heart',
                 'title' => 'Kylmä sydän',
                 'description' => '10 tuntia avannossa',
-                'unlocked' => $this->sumDuration($this->baseQuery($user)) >= 36000,
+                'unlocked' => $metrics['total_duration'] >= 36000,
             ],
+        ];
+    }
+
+    private function achievementMetrics(User $user, array $streaks): array
+    {
+        $baseQuery = $this->baseQuery($user);
+        $records = (clone $baseQuery)->get([
+            'date',
+            'location',
+            'water_temperature',
+            'duration_minutes',
+            'duration_seconds',
+            'swear_words',
+            'feeling_before',
+            'feeling_after',
+            'selfie_path',
+            'sauna',
+            'sauna_duration',
+            'created_at',
+        ]);
+
+        $allTimeVisits = $records->count();
+        $longestEver = $records->max(fn (Avanto $avanto) => $avanto->total_duration) ?? 0;
+        $totalDuration = $records->sum(fn (Avanto $avanto) => $avanto->total_duration);
+
+        $temperatures = $records
+            ->pluck('water_temperature')
+            ->filter(fn ($value) => $value !== null);
+
+        $coldestEver = $temperatures->isEmpty()
+            ? null
+            : round((float) $temperatures->min(), 1);
+
+        $saunaRecords = $records->where('sauna', true);
+        $longestSauna = (int) ($saunaRecords->max('sauna_duration') ?? 0);
+
+        $locationCounts = $records
+            ->filter(fn (Avanto $avanto) => filled($avanto->location))
+            ->groupBy('location')
+            ->map->count();
+
+        $distinctMonths = $records
+            ->map(fn (Avanto $avanto) => Carbon::parse($avanto->date)->format('Y-m'))
+            ->unique()
+            ->count();
+
+        $winterMonthDips = $records
+            ->filter(fn (Avanto $avanto) => in_array(Carbon::parse($avanto->date)->month, [11, 12, 1, 2, 3], true))
+            ->count();
+
+        $weeklyCounts = $records
+            ->groupBy(fn (Avanto $avanto) => Carbon::parse($avanto->date)->format('o-W'))
+            ->map->count();
+
+        $uniqueDates = $records
+            ->map(fn (Avanto $avanto) => Carbon::parse($avanto->date)->toDateString())
+            ->unique()
+            ->sort()
+            ->values();
+
+        $hasComeback = false;
+
+        for ($index = 1; $index < $uniqueDates->count(); $index++) {
+            $gap = Carbon::parse($uniqueDates[$index - 1])
+                ->diffInDays(Carbon::parse($uniqueDates[$index]));
+
+            if ($gap >= 30) {
+                $hasComeback = true;
+                break;
+            }
+        }
+
+        return [
+            'all_time_visits' => $allTimeVisits,
+            'longest_ever' => (int) $longestEver,
+            'total_duration' => (int) $totalDuration,
+            'coldest_ever' => $coldestEver,
+            'has_sub_zero_dip' => $temperatures->contains(fn ($value) => $value <= 0),
+            'sauna_count' => $saunaRecords->count(),
+            'longest_sauna' => $longestSauna,
+            'distinct_locations' => $locationCounts->count(),
+            'max_location_visits' => (int) ($locationCounts->max() ?? 0),
+            'distinct_months' => $distinctMonths,
+            'winter_month_dips' => $winterMonthDips,
+            'has_weekly_habit' => $weeklyCounts->contains(fn (int $count) => $count >= 3),
+            'has_comeback' => $hasComeback,
+            'has_mood_boost' => $records->contains(function (Avanto $avanto) {
+                return $avanto->feeling_before !== null
+                    && $avanto->feeling_after !== null
+                    && ($avanto->feeling_after - $avanto->feeling_before) >= 5;
+            }),
+            'has_zen_dip' => $records->contains(fn (Avanto $avanto) => $avanto->feeling_after !== null && $avanto->feeling_after >= 9),
+            'max_swear_words' => (int) ($records->max('swear_words') ?? 0),
+            'silent_dip_count' => $records->filter(fn (Avanto $avanto) => (int) ($avanto->swear_words ?? 0) === 0)->count(),
+            'has_new_year_dip' => $records->contains(function (Avanto $avanto) {
+                $date = Carbon::parse($avanto->date);
+
+                return $date->month === 1 && $date->day === 1;
+            }),
+            'has_selfie' => $records->contains(fn (Avanto $avanto) => filled($avanto->selfie_path)),
+            'has_early_bird' => $records->contains(function (Avanto $avanto) {
+                return $avanto->created_at !== null && $avanto->created_at->hour < 10;
+            }),
         ];
     }
 

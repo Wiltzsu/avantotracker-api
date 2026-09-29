@@ -141,20 +141,64 @@ class StatsServiceTest extends TestCase
 
     public function test_it_unlocks_achievements_based_on_all_time_stats(): void
     {
+        Carbon::setTestNow('2026-01-15 08:30:00');
+
         $user = User::factory()->create();
 
         Avanto::factory()->for($user)->create([
+            'date' => '2026-01-15',
+            'location' => 'Seurasaari',
+            'water_temperature' => -1.5,
             'duration_minutes' => 6,
             'duration_seconds' => 0,
+            'swear_words' => 6,
+            'feeling_before' => 2,
+            'feeling_after' => 9,
             'sauna' => true,
+            'sauna_duration' => 25,
+            'selfie_path' => 'selfies/test.jpg',
         ]);
 
         $stats = $this->service->getUserStats($user);
         $achievements = collect($stats['achievements'])->keyBy('id');
 
-        $this->assertFalse($achievements['ice_king']['unlocked']);
+        $this->assertCount(30, $stats['achievements']);
+        $this->assertTrue($achievements['first_dip']['unlocked']);
         $this->assertTrue($achievements['endurance']['unlocked']);
+        $this->assertTrue($achievements['sub_zero']['unlocked']);
+        $this->assertTrue($achievements['ice_block']['unlocked']);
+        $this->assertTrue($achievements['mood_boost']['unlocked']);
+        $this->assertTrue($achievements['zen']['unlocked']);
+        $this->assertTrue($achievements['swear_storm']['unlocked']);
+        $this->assertTrue($achievements['long_sauna']['unlocked']);
+        $this->assertTrue($achievements['selfie_star']['unlocked']);
+        $this->assertTrue($achievements['early_bird']['unlocked']);
+        $this->assertTrue($achievements['winter_starter']['unlocked']);
+        $this->assertFalse($achievements['ice_king']['unlocked']);
         $this->assertFalse($achievements['arctic_hero']['unlocked']);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_it_unlocks_comeback_and_weekly_habit_achievements(): void
+    {
+        Carbon::setTestNow('2026-03-15 12:00:00');
+
+        $user = User::factory()->create();
+
+        foreach (['2026-03-03', '2026-03-05', '2026-03-07'] as $date) {
+            Avanto::factory()->for($user)->create(['date' => $date]);
+        }
+
+        Avanto::factory()->for($user)->create(['date' => '2026-01-01']);
+
+        $achievements = collect($this->service->getUserStats($user)['achievements'])->keyBy('id');
+
+        $this->assertTrue($achievements['weekly_habit']['unlocked']);
+        $this->assertTrue($achievements['comeback']['unlocked']);
+        $this->assertTrue($achievements['new_year']['unlocked']);
+
+        Carbon::setTestNow();
     }
 
     public function test_it_resolves_preset_date_ranges(): void
