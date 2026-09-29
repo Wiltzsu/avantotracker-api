@@ -61,6 +61,27 @@ class AvantoTest extends TestCase
         ]);
     }
 
+    public function test_create_avanto_ignores_user_id_tampering(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/v1/avanto', [
+            'user_id' => $otherUser->id,
+            'date' => '2025-09-29',
+            'location' => 'Helsinki',
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['user_id']);
+
+        $this->assertDatabaseMissing('new_avanto', [
+            'user_id' => $otherUser->id,
+            'location' => 'Helsinki',
+        ]);
+    }
+
     public function test_create_avanto_requires_date(): void
     {
         Sanctum::actingAs(User::factory()->create());
@@ -99,7 +120,7 @@ class AvantoTest extends TestCase
 
         $response = $this->getJson("/api/v1/avanto/{$avanto->avanto_id}");
 
-        $response->assertForbidden();
+        $response->assertNotFound();
     }
 
     public function test_user_can_update_their_avanto(): void
@@ -139,7 +160,7 @@ class AvantoTest extends TestCase
             'location' => 'Hacked',
         ]);
 
-        $response->assertForbidden();
+        $response->assertNotFound();
     }
 
     public function test_user_can_delete_their_avanto(): void
@@ -169,6 +190,6 @@ class AvantoTest extends TestCase
 
         $response = $this->deleteJson("/api/v1/avanto/{$avanto->avanto_id}");
 
-        $response->assertForbidden();
+        $response->assertNotFound();
     }
 }

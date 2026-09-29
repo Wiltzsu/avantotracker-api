@@ -2,6 +2,7 @@
 
 return [
 
+<<<<<<< HEAD
     /*
     |--------------------------------------------------------------------------
     | Cross-Origin Resource Sharing (CORS) Configuration
@@ -15,16 +16,25 @@ return [
     |
     */
 
+=======
+>>>>>>> development
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
+<<<<<<< HEAD
     'allowed_origins' => [
         'https://www.avantotracker.com',
         'https://avantotracker.com',
         'http://localhost:3000',
         'http://localhost:3001',
     ],
+=======
+    'allowed_origins' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,https://www.avantotracker.com,https://avantotracker.com'))
+    ))),
+>>>>>>> development
 
     'allowed_origins_patterns' => [],
 
@@ -32,8 +42,14 @@ return [
 
     'exposed_headers' => [],
 
+<<<<<<< HEAD
     'max_age' => 3600,
 
     'supports_credentials' => true,
+=======
+    'max_age' => 0,
+
+    'supports_credentials' => false,
+>>>>>>> development
 
 ];

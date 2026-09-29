@@ -14,6 +14,7 @@ class UpdateAvantoRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'user_id' => 'prohibited',
             'date' => 'sometimes|date',
             'location' => 'nullable|string|max:255',
             'water_temperature' => 'nullable|numeric|min:0|max:50',

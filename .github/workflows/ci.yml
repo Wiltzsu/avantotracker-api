@@ -1,9 +1,10 @@
-name: Deploy to production
+name: CI
 
 on:
   push:
-    branches: [master]
-  workflow_dispatch:
+    branches: [master, development]
+  pull_request:
+    branches: [master, development]
 
 jobs:
   test:
@@ -27,16 +28,3 @@ jobs:
 
       - name: Run tests
         run: php artisan test
-
-  deploy:
-    needs: test
-    uses: Wiltzsu/platform/.github/workflows/reusable-deploy-laravel.yml@master
-    with:
-      deploy_path: /var/www/avantotracker-api
-      php_version: "8.4"
-      node_version: "20"
-      run_migrations: true
-    secrets:
-      SSH_KEY: ${{ secrets.SSH_KEY }}
-      HOST: ${{ secrets.HOST }}
-      USER: ${{ secrets.USER }}
