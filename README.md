@@ -44,6 +44,10 @@ All routes below require `auth:sanctum`.
 - `DELETE /api/v1/avanto/{avanto}` - destroy
 - `GET /api/v1/stats` - aggregated stats (`?range=all|month|6months|year`, optional `start_date` / `end_date`)
 - `GET /api/v1/dashboard` - monthly snapshot, streaks, recent avantos, highlights
+- `GET /api/v1/records` - personal records (coldest, longest, swear words, mood swing)
+- `GET /api/v1/avanto/export` - CSV export (same filters as list)
+- `GET /api/v1/avanto` - supports `location`, `start_date`, `end_date`, `sauna` filters
+- `POST/DELETE /api/v1/avanto/{avanto}/selfie` - optional photo upload
 
 ## Security notes
 
