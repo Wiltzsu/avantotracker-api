@@ -27,11 +27,19 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request): JsonResponse
     {
-        if (! auth()->attempt($request->only('email', 'password'))) {
+        $request->ensureIsNotRateLimited();
+
+        if (! auth()->validate($request->only('email', 'password'))) {
+            $request->hitRateLimiter();
+
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
+        $request->clearRateLimiter();
+
         $user = User::where('email', $request->email)->firstOrFail();
+        $user->tokens()->delete();
+
         $token = $user->createToken('auth_token', ['*'], now()->addDays(7))->plainTextToken;
 
         return response()->json([

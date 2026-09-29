@@ -6,6 +6,7 @@ use App\Models\Avanto;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class StatsService
 {
@@ -29,6 +30,8 @@ class StatsService
 
     private function getTotalDuration(Builder $query): int
     {
-        return $query->get()->sum(fn ($avanto) => $avanto->total_duration);
+        return (int) (clone $query)->sum(
+            DB::raw('COALESCE(duration_minutes, 0) * 60 + COALESCE(duration_seconds, 0)')
+        );
     }
 }

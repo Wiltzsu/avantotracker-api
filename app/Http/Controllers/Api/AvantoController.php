@@ -7,15 +7,12 @@ use App\Http\Requests\StoreAvantoRequest;
 use App\Http\Requests\UpdateAvantoRequest;
 use App\Http\Resources\AvantoResource;
 use App\Models\Avanto;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class AvantoController extends Controller
 {
-    use AuthorizesRequests;
-
     public function index(Request $request): AnonymousResourceCollection
     {
         $avantos = $request->user()
@@ -28,10 +25,7 @@ class AvantoController extends Controller
 
     public function store(StoreAvantoRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $data['user_id'] = $request->user()->id;
-
-        $avanto = Avanto::create($data);
+        $avanto = $request->user()->avantos()->create($request->validated());
 
         return (new AvantoResource($avanto))
             ->additional(['message' => 'Avanto session created successfully'])
@@ -41,15 +35,11 @@ class AvantoController extends Controller
 
     public function show(Avanto $avanto): AvantoResource
     {
-        $this->authorize('view', $avanto);
-
         return new AvantoResource($avanto);
     }
 
     public function update(UpdateAvantoRequest $request, Avanto $avanto): JsonResponse
     {
-        $this->authorize('update', $avanto);
-
         $avanto->update($request->validated());
 
         return (new AvantoResource($avanto))
@@ -59,8 +49,6 @@ class AvantoController extends Controller
 
     public function destroy(Avanto $avanto): JsonResponse
     {
-        $this->authorize('delete', $avanto);
-
         $avanto->delete();
 
         return response()->json(['message' => 'Avanto session deleted successfully']);
