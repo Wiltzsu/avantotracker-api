@@ -56,9 +56,11 @@ class StatsTest extends TestCase
                     'location_breakdown',
                     'sauna_breakdown',
                     'achievements',
+                    'mood_timeline',
                     'period',
                 ],
-            ]);
+            ])
+            ->assertJsonCount(2, 'data.mood_timeline');
     }
 
     public function test_stats_can_filter_by_start_date(): void

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\SelfieService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,6 +28,7 @@ class AvantoResource extends JsonResource
             'feeling_after' => $this->feeling_after,
             'sauna' => $this->sauna,
             'sauna_duration' => $this->sauna_duration,
+            'selfie_url' => app(SelfieService::class)->url($this->selfie_path),
         ];
     }
 }

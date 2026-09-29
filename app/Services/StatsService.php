@@ -68,6 +68,7 @@ class StatsService
             'location_breakdown' => $this->locationBreakdown($query),
             'sauna_breakdown' => $this->saunaBreakdown($query),
             'achievements' => $this->buildAchievements($user, $totalVisits, $totalDuration, $streaks),
+            'mood_timeline' => $this->moodTimeline($query),
             'period' => [
                 'start_date' => $startDate?->toDateString(),
                 'end_date' => $endDate?->toDateString(),
@@ -231,6 +232,24 @@ class StatsService
             'with_sauna' => $withSauna,
             'without_sauna' => $withoutSauna,
         ];
+    }
+
+    private function moodTimeline(Builder $query): array
+    {
+        return (clone $query)
+            ->whereNotNull('feeling_before')
+            ->whereNotNull('feeling_after')
+            ->orderBy('date')
+            ->get(['avanto_id', 'date', 'feeling_before', 'feeling_after'])
+            ->map(fn (Avanto $avanto) => [
+                'avanto_id' => $avanto->avanto_id,
+                'date' => $avanto->date->toDateString(),
+                'feeling_before' => $avanto->feeling_before,
+                'feeling_after' => $avanto->feeling_after,
+                'mood_delta' => $avanto->feeling_after - $avanto->feeling_before,
+            ])
+            ->values()
+            ->all();
     }
 
     private function buildAchievements(User $user, int $totalVisits, int $totalDuration, array $streaks): array
