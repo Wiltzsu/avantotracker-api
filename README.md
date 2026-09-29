@@ -42,7 +42,8 @@ All routes below require `auth:sanctum`.
 - `GET /api/v1/avanto/{avanto}` - show (404 for other users' records)
 - `PUT/PATCH /api/v1/avanto/{avanto}` - update
 - `DELETE /api/v1/avanto/{avanto}` - destroy
-- `GET /api/v1/stats` - aggregated stats for current user
+- `GET /api/v1/stats` - aggregated stats (`?range=all|month|6months|year`, optional `start_date` / `end_date`)
+- `GET /api/v1/dashboard` - monthly snapshot, streaks, recent avantos, highlights
 
 ## Security notes
 

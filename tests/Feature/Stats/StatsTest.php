@@ -4,6 +4,7 @@ namespace Tests\Feature\Stats;
 
 use App\Models\Avanto;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -40,7 +41,24 @@ class StatsTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.total_visits', 2)
-            ->assertJsonPath('data.total_duration', 330);
+            ->assertJsonPath('data.total_duration', 330)
+            ->assertJsonPath('data.longest_duration', 180)
+            ->assertJsonStructure([
+                'data' => [
+                    'average_duration',
+                    'average_water_temperature',
+                    'coldest_water_temperature',
+                    'total_swear_words',
+                    'total_sauna_sessions',
+                    'current_streak_days',
+                    'best_streak_days',
+                    'visits_by_month',
+                    'location_breakdown',
+                    'sauna_breakdown',
+                    'achievements',
+                    'period',
+                ],
+            ]);
     }
 
     public function test_stats_can_filter_by_start_date(): void
@@ -91,6 +109,34 @@ class StatsTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.total_visits', 1)
             ->assertJsonPath('data.total_duration', 120);
+    }
+
+    public function test_stats_can_filter_by_preset_range(): void
+    {
+        Carbon::setTestNow('2026-06-15');
+
+        $user = User::factory()->create();
+
+        Avanto::factory()->for($user)->create([
+            'date' => '2026-06-10',
+            'duration_minutes' => 2,
+            'duration_seconds' => 0,
+        ]);
+
+        Avanto::factory()->for($user)->create([
+            'date' => '2025-01-01',
+            'duration_minutes' => 5,
+            'duration_seconds' => 0,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/v1/stats?range=month')
+            ->assertOk()
+            ->assertJsonPath('data.total_visits', 1)
+            ->assertJsonPath('data.total_duration', 120);
+
+        Carbon::setTestNow();
     }
 
     public function test_stats_rejects_end_date_before_start_date(): void

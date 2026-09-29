@@ -15,10 +15,16 @@ class StatsController extends Controller
 
     public function stats(StatsRequest $request): JsonResponse
     {
-        $stats = $this->statsService->getUserStats(
-            $request->user(),
+        [$startDate, $endDate] = $this->statsService->resolveDateRange(
+            $request->input('range'),
             $request->date('start_date'),
             $request->date('end_date'),
+        );
+
+        $stats = $this->statsService->getUserStats(
+            $request->user(),
+            $startDate,
+            $endDate,
         );
 
         return response()->json(['data' => $stats]);

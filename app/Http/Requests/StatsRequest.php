@@ -14,6 +14,7 @@ class StatsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'range' => 'nullable|in:all,month,6months,year,custom',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ];
