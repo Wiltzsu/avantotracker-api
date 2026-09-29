@@ -19,53 +19,18 @@ class AuthTest extends TestCase
         RateLimiter::clear(Str::transliterate('login@example.com|127.0.0.1'));
     }
 
-    public function test_user_can_register_with_valid_data(): void
+    public function test_registration_is_not_available(): void
     {
-        $response = $this->postJson('/api/register', [
+        $this->postJson('/api/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'Password1',
             'password_confirmation' => 'Password1',
-        ]);
+        ])->assertNotFound();
 
-        $response->assertCreated()
-            ->assertJsonStructure([
-                'message',
-                'user' => ['id', 'name', 'email'],
-                'token',
-                'token_type',
-            ])
-            ->assertJsonPath('token_type', 'Bearer');
-
-        $this->assertDatabaseHas('users', [
+        $this->assertDatabaseMissing('users', [
             'email' => 'test@example.com',
         ]);
-    }
-
-    public function test_register_requires_valid_input(): void
-    {
-        $response = $this->postJson('/api/register', [
-            'name' => '',
-            'email' => 'not-an-email',
-            'password' => 'short',
-            'password_confirmation' => 'short',
-        ]);
-
-        $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'email', 'password']);
-    }
-
-    public function test_register_rejects_weak_password(): void
-    {
-        $response = $this->postJson('/api/register', [
-            'name' => 'Test User',
-            'email' => 'weak@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
-
-        $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['password']);
     }
 
     public function test_user_can_login_with_valid_credentials(): void

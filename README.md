@@ -27,12 +27,11 @@ Production uses MySQL credentials from the server `.env` only. Do not commit sec
 
 ### Auth
 
-- `POST /api/register` - rate limited (5/min per IP)
 - `POST /api/login` - rate limited after failed attempts (5/min per email+IP)
 - `POST /api/logout` - requires auth
 - `GET /api/me` - requires auth
 
-Passwords must include upper and lower case letters and a number.
+Public registration is disabled. Create users on the server with `php artisan tinker` when needed.
 
 ### Avanto endpoints (v1)
 
