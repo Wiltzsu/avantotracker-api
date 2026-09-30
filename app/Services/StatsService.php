@@ -387,7 +387,7 @@ class StatsService
             ],
             [
                 'id' => 'mood_boost',
-                'title' => 'Fiilipiikki',
+                'title' => 'Fiilispiikki',
                 'description' => 'Fiilis paranee vähintään 5 pykälää',
                 'unlocked' => $metrics['has_mood_boost'],
             ],
