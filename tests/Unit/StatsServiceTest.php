@@ -162,7 +162,7 @@ class StatsServiceTest extends TestCase
         $stats = $this->service->getUserStats($user);
         $achievements = collect($stats['achievements'])->keyBy('id');
 
-        $this->assertCount(30, $stats['achievements']);
+        $this->assertCount(31, $stats['achievements']);
         $this->assertTrue($achievements['first_dip']['unlocked']);
         $this->assertTrue($achievements['endurance']['unlocked']);
         $this->assertTrue($achievements['sub_zero']['unlocked']);

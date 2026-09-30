@@ -422,6 +422,12 @@ class StatsService
                 'unlocked' => $metrics['sauna_count'] >= 20,
             ],
             [
+                'id' => 'sauna_majuri',
+                'title' => 'Saunamajuri',
+                'description' => '50 saunakertaa yhteensä',
+                'unlocked' => $metrics['sauna_count'] >= 50,
+            ],
+            [
                 'id' => 'long_sauna',
                 'title' => 'Pitkä löyly',
                 'description' => 'Saunan kesto vähintään 20 minuuttia',
