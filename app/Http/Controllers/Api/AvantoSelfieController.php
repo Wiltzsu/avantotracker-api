@@ -7,20 +7,31 @@ use App\Http\Requests\UploadSelfieRequest;
 use App\Http\Resources\AvantoResource;
 use App\Models\Avanto;
 use App\Services\SelfieService;
+use App\Services\StatsService;
 use Illuminate\Http\JsonResponse;
 
 class AvantoSelfieController extends Controller
 {
-    public function __construct(private SelfieService $selfieService)
-    {
+    public function __construct(
+        private SelfieService $selfieService,
+        private StatsService $statsService,
+    ) {
     }
 
     public function store(UploadSelfieRequest $request, Avanto $avanto): JsonResponse
     {
+        $user = $request->user();
+        $previouslyUnlocked = $this->statsService->unlockedAchievementIds($user);
+
         $this->selfieService->store($avanto, $request->file('selfie'));
 
+        $newAchievements = $this->statsService->newlyUnlockedAchievements($user, $previouslyUnlocked);
+
         return (new AvantoResource($avanto->fresh()))
-            ->additional(['message' => 'Selfie uploaded successfully'])
+            ->additional([
+                'message' => 'Selfie uploaded successfully',
+                'new_achievements' => $newAchievements,
+            ])
             ->response();
     }
 

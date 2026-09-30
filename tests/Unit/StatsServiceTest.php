@@ -201,6 +201,29 @@ class StatsServiceTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_it_returns_only_newly_unlocked_achievements(): void
+    {
+        $user = User::factory()->create();
+
+        Avanto::factory()->for($user)->create([
+            'duration_minutes' => 1,
+            'duration_seconds' => 0,
+        ]);
+
+        $before = $this->service->unlockedAchievementIds($user);
+
+        Avanto::factory()->for($user)->create([
+            'duration_minutes' => 6,
+            'duration_seconds' => 0,
+        ]);
+
+        $newAchievements = $this->service->newlyUnlockedAchievements($user, $before);
+        $newIds = collect($newAchievements)->pluck('id');
+
+        $this->assertFalse($newIds->contains('first_dip'));
+        $this->assertTrue($newIds->contains('endurance'));
+    }
+
     public function test_it_resolves_preset_date_ranges(): void
     {
         Carbon::setTestNow('2026-06-15 12:00:00');

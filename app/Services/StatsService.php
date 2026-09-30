@@ -76,6 +76,44 @@ class StatsService
         ];
     }
 
+    public function achievementsForUser(User $user): array
+    {
+        $streaks = $this->calculateStreaks($user);
+
+        return $this->buildAchievements($user, 0, 0, $streaks);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function unlockedAchievementIds(User $user): array
+    {
+        return collect($this->achievementsForUser($user))
+            ->filter(fn (array $achievement) => $achievement['unlocked'])
+            ->pluck('id')
+            ->all();
+    }
+
+    /**
+     * @param  list<string>  $previouslyUnlockedIds
+     * @return list<array{id: string, title: string, description: string, unlocked: true}>
+     */
+    public function newlyUnlockedAchievements(User $user, array $previouslyUnlockedIds): array
+    {
+        $previous = collect($previouslyUnlockedIds);
+
+        return collect($this->achievementsForUser($user))
+            ->filter(fn (array $achievement) => $achievement['unlocked'] && ! $previous->contains($achievement['id']))
+            ->map(fn (array $achievement) => [
+                'id' => $achievement['id'],
+                'title' => $achievement['title'],
+                'description' => $achievement['description'],
+                'unlocked' => true,
+            ])
+            ->values()
+            ->all();
+    }
+
     public function calculateStreaks(User $user): array
     {
         $dates = $this->baseQuery($user)
@@ -121,11 +159,11 @@ class StatsService
     private function applyDateRange(Builder $query, ?Carbon $startDate, ?Carbon $endDate): Builder
     {
         if ($startDate) {
-            $query->where('date', '>=', $startDate->toDateString());
+            $query->whereDate('date', '>=', $startDate);
         }
 
         if ($endDate) {
-            $query->where('date', '<=', $endDate->toDateString());
+            $query->whereDate('date', '<=', $endDate);
         }
 
         return $query;

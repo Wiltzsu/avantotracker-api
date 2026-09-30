@@ -3,6 +3,7 @@
 namespace Tests\Feature\Flow;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,6 +13,8 @@ class SmokeFlowTest extends TestCase
 
     public function test_login_create_dashboard_stats_and_export_flow(): void
     {
+        Carbon::setTestNow('2026-09-30 12:00:00');
+
         $user = User::factory()->create([
             'email' => 'dipper@example.com',
         ]);
@@ -24,7 +27,7 @@ class SmokeFlowTest extends TestCase
         $token = $login->json('token');
 
         $create = $this->withToken($token)->postJson('/api/v1/avanto', [
-            'date' => now()->toDateString(),
+            'date' => '2026-09-30',
             'location' => 'Smoke Test Bay',
             'water_temperature' => 1.0,
             'duration_minutes' => 2,
@@ -33,12 +36,19 @@ class SmokeFlowTest extends TestCase
             'feeling_after' => 8,
             'sauna' => true,
             'sauna_duration' => 10,
-        ])->assertCreated();
+        ])->assertCreated()
+            ->assertJsonPath('new_achievements.0.id', 'first_dip');
 
         $avantoId = $create->json('data.avanto_id');
 
-        $this->withToken($token)->getJson('/api/v1/dashboard')
-            ->assertOk()
+        $this->assertDatabaseHas('new_avanto', [
+            'avanto_id' => $avantoId,
+            'location' => 'Smoke Test Bay',
+        ]);
+
+        $dashboard = $this->withToken($token)->getJson('/api/v1/dashboard');
+
+        $dashboard->assertOk()
             ->assertJsonPath('data.monthly_snapshot.visits', 1)
             ->assertJsonPath('data.recent_avantos.0.location', 'Smoke Test Bay');
 
@@ -55,5 +65,7 @@ class SmokeFlowTest extends TestCase
 
         $export->assertOk();
         $this->assertStringContainsString('Smoke Test Bay', $export->streamedContent());
+
+        Carbon::setTestNow();
     }
 }

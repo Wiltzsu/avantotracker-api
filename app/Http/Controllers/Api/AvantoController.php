@@ -10,6 +10,7 @@ use App\Http\Resources\AvantoResource;
 use App\Models\Avanto;
 use App\Services\AvantoQueryService;
 use App\Services\SelfieService;
+use App\Services\StatsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -18,6 +19,7 @@ class AvantoController extends Controller
     public function __construct(
         private AvantoQueryService $avantoQueryService,
         private SelfieService $selfieService,
+        private StatsService $statsService,
     ) {
     }
 
@@ -39,10 +41,18 @@ class AvantoController extends Controller
 
     public function store(StoreAvantoRequest $request): JsonResponse
     {
-        $avanto = $request->user()->avantos()->create($request->validated());
+        $user = $request->user();
+        $previouslyUnlocked = $this->statsService->unlockedAchievementIds($user);
+
+        $avanto = $user->avantos()->create($request->validated());
+
+        $newAchievements = $this->statsService->newlyUnlockedAchievements($user, $previouslyUnlocked);
 
         return (new AvantoResource($avanto))
-            ->additional(['message' => 'Avanto session created successfully'])
+            ->additional([
+                'message' => 'Avanto session created successfully',
+                'new_achievements' => $newAchievements,
+            ])
             ->response()
             ->setStatusCode(201);
     }

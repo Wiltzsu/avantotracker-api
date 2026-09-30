@@ -53,7 +53,13 @@ class AvantoTest extends TestCase
         $response->assertCreated()
             ->assertJsonPath('message', 'Avanto session created successfully')
             ->assertJsonPath('data.location', 'Helsinki')
-            ->assertJsonPath('data.user_id', $user->id);
+            ->assertJsonPath('data.user_id', $user->id)
+            ->assertJsonStructure([
+                'new_achievements' => [
+                    ['id', 'title', 'description', 'unlocked'],
+                ],
+            ])
+            ->assertJsonPath('new_achievements.0.id', 'first_dip');
 
         $this->assertDatabaseHas('new_avanto', [
             'user_id' => $user->id,
