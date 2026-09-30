@@ -333,7 +333,7 @@ class StatsService
             ],
             [
                 'id' => 'ice_block',
-                'title' => 'Jääpalas',
+                'title' => 'Jääpala',
                 'description' => 'Veden lämpötila −1 °C tai alempi',
                 'unlocked' => $metrics['coldest_ever'] !== null && $metrics['coldest_ever'] <= -1,
             ],
