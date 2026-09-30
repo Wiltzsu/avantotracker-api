@@ -339,7 +339,7 @@ class StatsService
             ],
             [
                 'id' => 'minute_man',
-                'title' => 'Minuuttimestari',
+                'title' => 'Minuutin mies',
                 'description' => 'Yksi uinti kestää vähintään minuutin',
                 'unlocked' => $metrics['longest_ever'] >= 60,
             ],
