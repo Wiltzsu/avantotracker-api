@@ -417,7 +417,7 @@ class StatsService
             ],
             [
                 'id' => 'sauna_regular',
-                'title' => 'Saunavaki',
+                'title' => 'Saunavakio',
                 'description' => '20 saunakertaa yhteensä',
                 'unlocked' => $metrics['sauna_count'] >= 20,
             ],
