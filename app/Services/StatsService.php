@@ -309,7 +309,7 @@ class StatsService
             ],
             [
                 'id' => 'winter_starter',
-                'title' => 'Talven aloitaja',
+                'title' => 'Talven aloittaja',
                 'description' => 'Avanto marraskuusta maaliskuuhun',
                 'unlocked' => $metrics['winter_month_dips'] >= 1,
             ],
