@@ -351,7 +351,7 @@ class StatsService
             ],
             [
                 'id' => 'endurance',
-                'title' => 'Kestävyusuintija',
+                'title' => 'Kestävyysuija',
                 'description' => 'Yksi uinti kestää yli 5 minuuttia',
                 'unlocked' => $metrics['longest_ever'] >= 300,
             ],
