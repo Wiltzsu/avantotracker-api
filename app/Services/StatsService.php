@@ -394,7 +394,7 @@ class StatsService
             [
                 'id' => 'zen',
                 'title' => 'Zen-uinti',
-                'description' => 'Fiilis uinti jälkeen vähintään 9',
+                'description' => 'Fiilis uinnin jälkeen vähintään 9',
                 'unlocked' => $metrics['has_zen_dip'],
             ],
             [
