@@ -12,7 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        // No trusted proxies: nginx resolves the real client IP from Cloudflare
+        // (real_ip_header CF-Connecting-IP) and serves HTTPS itself. Trusting
+        // proxies here would let clients spoof X-Forwarded-For and dodge rate limits.
         $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {

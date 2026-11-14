@@ -87,6 +87,29 @@ class AuthTest extends TestCase
             ->assertJsonStructure(['message', 'retry_after']);
     }
 
+    public function test_login_rate_limit_cannot_be_bypassed_with_spoofed_forwarded_for(): void
+    {
+        User::factory()->create([
+            'email' => 'login@example.com',
+        ]);
+
+        // nginx already resolves the real client IP from Cloudflare, so a
+        // client-supplied X-Forwarded-For must not change the throttle key.
+        for ($i = 0; $i < 5; $i++) {
+            $this->withHeader('X-Forwarded-For', "203.0.113.{$i}")
+                ->postJson('/api/login', [
+                    'email' => 'login@example.com',
+                    'password' => 'wrong-password',
+                ])->assertUnauthorized();
+        }
+
+        $this->withHeader('X-Forwarded-For', '203.0.113.99')
+            ->postJson('/api/login', [
+                'email' => 'login@example.com',
+                'password' => 'wrong-password',
+            ])->assertStatus(429);
+    }
+
     public function test_login_revokes_existing_tokens(): void
     {
         $user = User::factory()->create([
